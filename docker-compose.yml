@@ -1,0 +1,58 @@
+services: 
+  # Database service (PostgreSQL) 
+  database: 
+    image: postgres:13 
+    container_name: postgres_db 
+    environment: 
+      POSTGRES_DB: ${POSTGRES_DB:-login_register} 
+      POSTGRES_USER: ${POSTGRES_USER:-postgres} 
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password} 
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data 
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql 
+    ports: 
+      - "5432:5432" 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d login_register"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    networks: 
+      - app-network 
+
+  # Redis service for sessions 
+  redis: 
+    image: redis:6-alpine 
+    container_name: redis_cache 
+    ports: 
+      - "6379:6379" 
+    volumes: 
+      - redis_data:/data 
+    networks: 
+      - app-network 
+
+  # Backend API service 
+  backend:
+    build: ./backend
+    container_name: fastapi_backend
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgresql://postgres.hnfjjlxfpkxihbgcnyuo:admin-login-register-db@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-supersecretkey}
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+
+volumes: 
+  postgres_data: 
+  redis_data: 
+
+networks: 
+  app-network: 
+    driver: bridge

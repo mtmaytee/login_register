@@ -1,0 +1,13 @@
+## 2. Master Prompt
+
+สร้างโปรเจกต์ระบบ Login/Register สำหรับรองรับ High Concurrency (100,000 CCU) แบบครบวงจรด้วยสถาปัตยกรรม Python (FastAPI), PostgreSQL, Redis, Nginx และ Angular โดยแบ่งการทำงานดังนี้:
+
+1) **Backend API:** เขียนด้วย Python 3.11+ (FastAPI) แบบ Async ทั้งหมด ใช้ Async SQLAlchemy 2.0 ร่วมกับ asyncpg เชื่อมต่อ PostgreSQL, ใช้ passlib[argon2] สำหรับ Hash Password, PyJWT สำหรับออก Access/Refresh Tokens, redis-py (redis.asyncio) สำหรับจัดการ Session/Token, Pydantic v2 ทำ Validation, จัดโครงสร้างแบบ Modular (app/main.py, app/core/config.py, app/models/, app/schemas/, app/api/v1/endpoints/), รองรับ CORS และ Exception Handlers
+
+2) **Database Schema:** เขียน SQL DDL Script บน PostgreSQL 16 สร้างตาราง users (id BIGSERIAL PK, uuid UUID DEFAULT gen_random_uuid(), email VARCHAR UNIQUE, phone VARCHAR UNIQUE, status VARCHAR DEFAULT 'ACTIVE', created_at TIMESTAMPTZ), user_authentications (id BIGSERIAL PK, user_id BIGINT, provider_type VARCHAR DEFAULT 'LOCAL', password_hash VARCHAR), refresh_tokens (id BIGSERIAL PK, user_id BIGINT, token_hash VARCHAR UNIQUE, is_revoked BOOLEAN, expires_at TIMESTAMPTZ), และ login_logs (id BIGSERIAL PK, user_id BIGINT, email_attempt VARCHAR, ip_address VARCHAR, status VARCHAR, created_at TIMESTAMPTZ) พร้อมสร้าง UNIQUE Index บน email, uuid, token_hash และ Composite Index บน (user_id, provider_type) และ (ip_address, created_at)
+
+3) **Docker Environment:** สร้างไฟล์ docker-compose.yml ประกอบด้วย Nginx เป็น Reverse Proxy/Load Balancer, FastAPI App (รันด้วย Gunicorn + Uvicorn Workers 2 Containers), PostgreSQL 16, PgBouncer เป็น Connection Pooler กั้นหน้า Postgres และ Redis 7 สำหรับ Caching/Session พร้อมตั้งค่า Healthchecks และ Internal Network
+
+4) **Frontend Angular:** เขียน Angular v17+ Standalone Components ภาษา TypeScript ประกอบด้วย Reactive Forms (FormGroup, FormBuilder, Validators) สำหรับ LoginComponent และ RegisterComponent พร้อม UX/UI แสดง Loading Spinner และ Error Message, สร้าง AuthService สำหรับจัดการ Login/Register/Logout/RefreshToken, Functional AuthInterceptor ฉีด Header `Authorization: Bearer`, Functional ErrorInterceptor จัดการ Auto Refresh Token เมื่อเจอ 401, สร้าง Functional AuthGuard และ NoAuthGuard พร้อม Lazy Loading Routes รวมถึงการใช้ Angular Signals หรือ RxJS ในการทำ State Management (isAuthenticated, currentUser, isLoading) สำหรับจัดการสถานะผู้ใช้
+
+5) **Load Testing:** เขียน JavaScript Script สำหรับ k6 ทำ Load Test โดยค่อยๆ เพิ่ม Virtual Users จาก 50 เป็น 500 VUs ภายใน 2 นาที สุ่มยิง HTTP POST /api/v1/login พร้อม JSON Payload ตรวจสอบ Status Code 200 OK ดึง access_token ออกมา และตั้งค่า Thresholds P95 Latency < 300ms และ Error Rate < 1%

@@ -86,17 +86,14 @@ async def login_line():
 
 @router.get("/callback/line")
 async def callback_line(code: str, state: str, db: Session = Depends(get_db)):
-    """รับ Code จาก LINE กลับมาเพื่อออก Token ของระบบเรา"""
     user = await AuthService.authenticate_line_user(db, code)
-    
     if not user:
         raise HTTPException(status_code=401, detail="LINE authentication failed")
 
     access_token = security.create_access_token(data={"sub": user.email}) 
-    refresh_token = security.create_refresh_token(data={"sub": user.email})
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+    
+    # URL ของ Frontend (เปลี่ยนพอร์ตให้ตรงกับเครื่องของคุณ หรือใช้ URL จริงบน Production)
+    frontend_url = "http://localhost:5173/oauth/callback" 
+    
+    # Redirect กลับไปที่ Frontend พร้อมแนบ Token ไปใน URL Query
+    return RedirectResponse(url=f"{frontend_url}?token={access_token}")

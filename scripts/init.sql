@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) UNIQUE NOT NULL, 
   phone VARCHAR(50) UNIQUE, 
   status VARCHAR(20) DEFAULT 'ACTIVE', 
+  line_user_id VARCHAR(255) UNIQUE,
+  hashed_password VARCHAR(255) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP ); 
 
   -- 2. ตารางเก็บรหัสผ่านและการยืนยันตัวตน (user_authentications) 

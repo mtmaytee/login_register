@@ -1,5 +1,7 @@
 # D:\login_register\backend\app\api\v1\endpoints\auth.py
+import urllib.parse
 from fastapi import APIRouter, Depends, HTTPException, status 
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session 
 from app.schemas import token as schemas 
 from app.services.auth_service import AuthService 
@@ -64,5 +66,37 @@ async def refresh_access_token(body: schemas.RefreshTokenRequest, db: Session = 
     return {
         "access_token": new_access_token,
         "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
+
+@router.get("/login/line")
+async def login_line():
+    """สร้าง URL ให้ผู้ใช้ Redirect ไปล็อกอินที่ LINE"""
+    state = "random_state_string" # ควรสร้างแบบสุ่มเพื่อป้องกัน CSRF
+    encoded_redirect_uri = urllib.parse.quote(settings.LINE_REDIRECT_URI)
+    
+    line_auth_url = (
+        f"https://access.line.me/oauth2/v2.1/authorize?response_type=code"
+        f"&client_id={settings.LINE_CHANNEL_ID}"
+        f"&redirect_uri={encoded_redirect_uri}"
+        f"&state={state}"
+        f"&scope=profile%20openid"
+    )
+    return RedirectResponse(url=line_auth_url)
+
+@router.get("/callback/line")
+async def callback_line(code: str, state: str, db: Session = Depends(get_db)):
+    """รับ Code จาก LINE กลับมาเพื่อออก Token ของระบบเรา"""
+    user = await AuthService.authenticate_line_user(db, code)
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="LINE authentication failed")
+
+    access_token = security.create_access_token(data={"sub": user.email}) 
+    refresh_token = security.create_refresh_token(data={"sub": user.email})
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer"
     }

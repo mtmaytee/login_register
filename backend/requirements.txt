@@ -10,3 +10,4 @@ pydantic-settings>=2.0.0
 email-validator>=2.0.0
 redis>=4.6.0
 uuid6
+httpx

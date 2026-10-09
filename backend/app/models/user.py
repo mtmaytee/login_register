@@ -19,6 +19,8 @@ class User(Base):
     phone = Column(String, unique=True, nullable=True)
     status = Column(String, default="ACTIVE")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    line_user_id = Column(String, unique=True, nullable=True)
+    hashed_password = Column(String, nullable=True)  # เพิ่มคอลัมน์ hashed_password
 
     # เชื่อมไปยังตาราง user_authentications
     authentication = relationship("UserAuthentication", 

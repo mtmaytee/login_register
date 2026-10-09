@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.services.user_service import UserService 
 from app.core import security 
 from app.core.config import settings
-from app.schemas import UserCreate # หรือ schema ที่ใช้สร้าง user
+from app.schemas.token import UserCreate # หรือ schema ที่ใช้สร้าง user
 
 class AuthService: 
     @staticmethod 

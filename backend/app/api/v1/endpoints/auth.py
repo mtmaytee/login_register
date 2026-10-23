@@ -15,18 +15,19 @@ router = APIRouter()
 
 @router.post("/login", response_model=schemas.Token) 
 async def login_for_access_token(form_data: schemas.LoginForm, db: Session = Depends(get_db)): 
-  user = AuthService.authenticate_user(db, form_data.email, form_data.password) 
-  if not user: 
-    raise HTTPException( status_code=status.HTTP_401_UNAUTHORIZED, 
-                        detail="Incorrect email or password", 
-                        headers={"WWW-Authenticate": "Bearer"}, ) 
-  # ใช้ security module ในการออก Access Token 
-  access_token = security.create_access_token(data={"sub": user.email}) 
-  refresh_token = security.create_refresh_token(data={"sub": user.email})
-
-  return {"access_token": access_token,
-           "refresh_token": refresh_token,
-           "token_type": "bearer"} 
+    user = AuthService.authenticate_user(db, form_data.email, form_data.password) 
+    if not user: 
+        raise HTTPException( 
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Incorrect email or password", 
+            headers={"WWW-Authenticate": "Bearer"}, 
+        ) 
+    # ใช้ security module ในการออก Access Token 
+    access_token = security.create_access_token(data={"sub": str(user.id)}) 
+    refresh_token = security.create_refresh_token(data={"sub": user.id})
+    return {"access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer"}
 
 @router.post("/register", response_model=schemas.User) 
 async def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)): 

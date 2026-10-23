@@ -14,12 +14,12 @@ def get_password_hash(password: str) -> str:
   return pwd_context.hash(password[:72])  # bcrypt มีข้อจำกัดความยาวรหัสผ่าน 72 ตัวอักษร
 
 def create_access_token(data: dict) -> str: 
-  """สร้าง JWT Access Token พร้อมตั้งเวลาหมดอายุ""" 
-  to_encode = data.copy() 
-  expire = datetime.utcnow() + timedelta(hours=1)  # กำหนดอายุ Access Token เป็น 1 ชั่วโมง
-  to_encode.update({"exp": expire}) 
-  encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256") 
-  return encoded_jwt
+    """สร้าง JWT Access Token พร้อมตั้งเวลาหมดอายุ""" 
+    to_encode = data.copy() 
+    expire = datetime.utcnow() + timedelta(hours=1)  # กำหนดอายุ Access Token เป็น 1 ชั่วโมง
+    to_encode.update({"exp": expire, "sub": str(data["user_id"])}) 
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256") 
+    return encoded_jwt
 
 def create_refresh_token(data: dict) -> str:
     to_encode = data.copy()

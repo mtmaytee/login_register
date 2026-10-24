@@ -23,8 +23,9 @@ async def login_for_access_token(form_data: schemas.LoginForm, db: Session = Dep
             headers={"WWW-Authenticate": "Bearer"}, 
         ) 
     # ใช้ security module ในการออก Access Token 
-    access_token = security.create_access_token(data={"sub": str(user.id)}) 
-    refresh_token = security.create_refresh_token(data={"sub": user.id})
+    access_token = security.create_access_token(data={"user_id": str(user.id)}) 
+    
+    refresh_token = security.create_refresh_token(data={"user_id": str(user.id)})
     return {"access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer"}
